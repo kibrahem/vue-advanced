@@ -1,0 +1,28 @@
+https://laracasts.com/discuss/channels/vue/what-do-you-guys-use-to-display-a-loader-icon-for-a-component-whose-while-http-request-is-processing
+
+axios.interceptors.request.use(function(config) {
+  console.log('Start Ajax Call');
+  return config;
+}, function(error) {
+  console.log('Error');
+  return Promise.reject(error);
+});
+
+axios.interceptors.response.use(function(response) {
+  console.log('Done with Ajax call');
+
+  return response;
+}, function(error) {
+  console.log('Error fetching the data');
+  return Promise.reject(error);
+});
+
+function getData() {
+  const url = 'https://jsonplaceholder.typicode.com/posts/1';
+  axios.get(url).then((data) => console.log('REQUEST DATA'));
+}
+
+function failToGetData() {
+  const url = 'https://bad_url.com';
+  axios.get(url).then((data) => console.log('REQUEST DATA'));
+}
