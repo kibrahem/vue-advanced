@@ -1,0 +1,163 @@
+  axios.interceptors.request.use(
+        config => {
+            if (config.showLoader) {
+                store.dispatch('loader/pending');
+            }
+            return config;
+        },
+        error => {
+            if (error.config.showLoader) {
+                store.dispatch('loader/done');
+            }
+            return Promise.reject(error);
+        }
+    );
+    axios.interceptors.response.use(
+        response => {
+            if (response.config.showLoader) {
+                store.dispatch('loader/done');
+            }
+
+            return response;
+        },
+        error => {
+            let response = error.response;
+
+            if (response.config.showLoader) {
+                store.dispatch('loader/done');
+            }
+
+            return Promise.reject(error);
+        }
+    )
+ window.axios.interceptors.request.use(function (config) {
+    EventBus.$emit('toggle-loader', true);
+
+    return config;
+}, function (error) {
+    EventBus.$emit('toggle-loader', false);
+
+    return Promise.reject(error);
+});
+
+axios.interceptors.response.use(function (response) {
+    EventBus.$emit('toggle-loader', false);
+
+    return response;
+}, function (error) {
+    EventBus.$emit('toggle-loader', false);
+
+    return Promise.reject(error);
+});
+
+created() {
+  axios.interceptors.request.use((config) => {
+    // trigger 'loading=true' event here
+    return config;
+  }, (error) => {
+    // trigger 'loading=false' event here
+    return Promise.reject(error);
+  });
+
+  axios.interceptors.response.use((response) => {
+    // trigger 'loading=false' event here
+    return response;
+  }, (error) => {
+    // trigger 'loading=false' event here
+    return Promise.reject(error);
+  });
+}
+ 
+ 
+ axios.interceptors.request.use(function (config) {
+     // spinning start to show
+     self.props.loading(true)
+     return config
+    }, function (error) {
+      return Promise.reject(error);
+    });
+
+    axios.interceptors.response.use(function (response) {
+     // spinning hide
+      self.props.loading(false)
+
+     return response;
+   }, function (error) {
+     return Promise.reject(error);
+   });
+  
+  
+  
+  Axios.interceptors.request.use(function (config) {
+
+  // spinning start to show
+  // UPDATE: Add this code to show global loading indicator
+  document.body.classList.add('loading-indicator');
+
+  const token = window.localStorage.token;
+  if (token) {
+     config.headers.Authorization = `token ${token}`
+  }
+  return config
+}, function (error) {
+  return Promise.reject(error);
+});
+
+Axios.interceptors.response.use(function (response) {
+
+  // spinning hide
+  // UPDATE: Add this code to hide global loading indicator
+  document.body.classList.remove('loading-indicator');
+
+  return response;
+}, function (error) {
+  return Promise.reject(error);
+});
+  
+  
+  axios.interceptors.request.use((config) => {
+    // trigger 'loading=true' event here
+    return config;
+  }, (error) => {
+    // trigger 'loading=false' event here
+    return Promise.reject(error);
+  });
+
+  axios.interceptors.response.use((response) => {
+    // trigger 'loading=false' event here
+    return response;
+  }, (error) => {
+    // trigger 'loading=false' event here
+    return Promise.reject(error);
+  });
+  
+  axios.interceptors.request.use(function(config) {
+  // Do something before request is sent
+  console.log('Start Ajax Call');
+  return config;
+}, function(error) {
+  // Do something with request error
+  console.log('Error');
+  return Promise.reject(error);
+});
+
+axios.interceptors.response.use(function(response) {
+  // Do something with response data
+  console.log('Done with Ajax call');
+
+  return response;
+}, function(error) {
+  // Do something with response error
+  console.log('Error fetching the data');
+  return Promise.reject(error);
+});
+
+function getData() {
+  const url = 'https://jsonplaceholder.typicode.com/posts/1';
+  axios.get(url).then((data) => console.log('REQUEST DATA'));
+}
+
+function failToGetData() {
+  const url = 'https://bad_url.com';
+  axios.get(url).then((data) => console.log('REQUEST DATA'));
+}
