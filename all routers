@@ -1,0 +1,113 @@
+   <router-view></router-view>
+
+   <router-link to="/Guest/one">one</router-link>
+   <router-link to="/Guest/two">two</router-link>
+   
+import { createRouter, createWebHistory } from "vue-router";
+import Home from "../views/Home.vue";
+export const x = (to, from, next) => {
+  // get roles
+  if (localStorage.getItem("token")) {
+    next();
+  } else {
+    next("/Login");
+  }
+};
+
+const routes = [
+  // null
+  {
+    path: "/",
+    redirect: "/Home",
+  },
+  // not found
+  { path: "/:pathMatch(.*)*", redirect: "/Home" },
+  // redirect
+  {
+    path: "/Home",
+    name: "Home",
+    component: Home,
+  },
+
+  // guard
+  {
+    path: "/Admin",
+    name: "Admin",
+    component: () =>
+      import( "../views/Admin.vue"),
+    beforeEnter: (to, from, next) => {
+      if (!localStorage.getItem("token")) {
+        next({
+          path: "/login",
+        });
+      } else {
+        next();
+      }
+    },
+  },
+  // children layout
+  {
+    path: "/Guest",
+    name: "Guest",
+    component: () =>
+      import( "../views/Guest.vue"),
+    children: [
+      {
+        path: "/Guest",
+        redirect: "/Guest/one"
+      }
+      ,{
+        path: "one",
+        name: "one",
+        component: () =>
+          import( "../components/One.vue"),
+      },
+      {
+        path: "two",
+        name: "two",
+        component: () =>
+          import( "../components/Two.vue"),
+      },
+    ],
+  },
+  // lazy loading
+  {
+    path: "/Login",
+    name: "Login",
+    component: () =>
+      import( "../views/Login.vue"),
+  },
+  // lazy loading
+  {
+    path: "/News",
+    name: "News",
+    component: () =>
+      import( "../views/News.vue"),
+  },
+  // lazy loading
+  {
+    path: "/Our",
+    name: "Our",
+    component: () => import( "../views/Our.vue"),
+  },
+  {
+    path: "/Post",
+    name: "Post",
+    component: () =>
+      import( "../views/Posts.vue"),
+  },
+  {
+    path: "/register",
+    name: "register",
+    component: () =>
+      import( "../views/Register.vue"),
+  },
+];
+
+const router = createRouter({
+  history: createWebHistory(process.env.BASE_URL),
+  routes,
+  linkActiveClass: "active",
+});
+
+export default router;
