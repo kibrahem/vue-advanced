@@ -1,0 +1,161 @@
+Axios.interceptors.response.use(response => response, error => {
+  const status = error.response ? error.response.status : null
+
+  if (status === 401) {
+    // will loop if refreshToken returns 401
+    return refreshToken(store).then(_ => {
+      error.config.headers['Authorization'] = 'Bearer ' + store.state.auth.token;
+      error.config.baseURL = undefined;
+      return Axios.request(error.config);
+    })
+    // Would be nice to catch an error here, which would work, if the interceptor is omitted
+    .catch(err => err);
+  }
+
+  return Promise.reject(error);
+});
+
+const axiosInstance = axios.create({
+     baseURL: baseURL,
+     timeout: 5000,
+     headers: {
+                'Authorization': localStorage.getItem('access_token') ? "JWT " + localStorage.getItem('access_token') : null,
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+     }
+});
+
+axiosInstance.interceptors.response.use(
+    response => response,
+    error => {
+        const originalRequest = error.config;
+
+        // Prevent infinite loops
+        if (error.response.status === 401 && originalRequest.url === baseURL+'token/refresh/') {
+            window.location.href = '/login/';
+            return Promise.reject(error);
+        }
+
+        if (error.response.data.code === "token_not_valid" &&
+            error.response.status === 401 && 
+            error.response.statusText === "Unauthorized") 
+            {
+                const refreshToken = localStorage.getItem('refresh_token');
+
+                if (refreshToken){
+                    const tokenParts = JSON.parse(atob(refreshToken.split('.')[1]));
+
+                    // exp date in token is expressed in seconds, while now() returns milliseconds:
+                    const now = Math.ceil(Date.now() / 1000);
+                    console.log(tokenParts.exp);
+
+                    if (tokenParts.exp > now) {
+                        return axiosInstance
+                        .post('/token/refresh/', {refresh: refreshToken})
+                        .then((response) => {
+            
+                            localStorage.setItem('access_token', response.data.access);
+                            localStorage.setItem('refresh_token', response.data.refresh);
+            
+                            axiosInstance.defaults.headers['Authorization'] = "JWT " + response.data.access;
+                            originalRequest.headers['Authorization'] = "JWT " + response.data.access;
+            
+                            return axiosInstance(originalRequest);
+                        })
+                        .catch(err => {
+                            console.log(err)
+                        });
+                    }else{
+                        console.log("Refresh token is expired", tokenParts.exp, now);
+                        window.location.href = '/login/';
+                    }
+                }else{
+                    console.log("Refresh token not available.")
+                    window.location.href = '/login/';
+                }
+        }
+      
+     
+      // specific error handling done elsewhere
+      return Promise.reject(error);
+  }
+);
+
+instance.interceptors.request.use(
+  (config) => {
+    const token = TokenService.getLocalAccessToken();
+    if (token) {
+      // config.headers["Authorization"] = 'Bearer ' + token;  // for Spring Boot back-end
+      config.headers["x-access-token"] = token; // for Node.js Express back-end
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+axios.interceptors.request.use(function (config) {
+  // Do something before request is sent
+  return config;
+　　//It is often used with token. Configure the token value to the token key and put the token key in the request header
+　　config.headers['Authorization'] = token;
+　　
+ }, function (error) {
+  // Do something with request error
+  return Promise.reject(error);
+ });
+
+//Add a response interceptor
+axios.interceptors.response.use(function (response) {
+  // Do something with response data
+  return response;
+ }, function (error) {
+  // Do something with response error
+  return Promise.reject(error);
+ });
+ 
+ import axios from 'axios';
+
+axios.interceptors.request.use(function(config) {
+    const token = this.$store.state.token;
+    if(token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, function(err) {
+    return Promise.reject(err);
+});
+
+const axios = require('axios');
+const axiosApiInstance = axios.create();
+
+// Request interceptor for API calls
+axiosApiInstance.interceptors.request.use(
+  async config => {
+    const value = await redisClient.get(rediskey)
+    const keys = JSON.parse(value)
+    config.headers = { 
+      'Authorization': `Bearer ${keys.access_token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    return config;
+  },
+  error => {
+    Promise.reject(error)
+});
+
+// Response interceptor for API calls
+axiosApiInstance.interceptors.response.use((response) => {
+  return response
+}, async function (error) {
+  const originalRequest = error.config;
+  if (error.response.status === 403 && !originalRequest._retry) {
+    originalRequest._retry = true;
+    const access_token = await refreshAccessToken();            
+    axios.defaults.headers.common['Authorization'] = 'Bearer ' + access_token;
+    return axiosApiInstance(originalRequest);
+  }
+  return Promise.reject(error);
+});
+
